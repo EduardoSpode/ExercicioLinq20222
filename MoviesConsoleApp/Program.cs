@@ -19,25 +19,136 @@ namespace MoviesConsoleApp
             Console.WriteLine();
             Console.WriteLine("1. Listar o nome de todos personagens desempenhados por um determinado ator, incluindo a informação de qual o título do filme e o diretor");
 
+            var query1 = from p in _db.Characters
+                                         .Include(per => per.Movie)
+                                         .Include(per => per.Actor)
+                              //     join genero in _db.Genres on p.Movie.GenreID equals genero.GenreId
+                          where p.Actor.Name == "Judi Dench"
+                          select new
+                          {
+                              p.Character,
+                              p.Movie.Director,
+                              p.Movie.Title
+                          };
+
+
+            foreach (var res in query1)
+            {
+
+                Console.WriteLine("\t {0} - {1} - {2}", res.Character, res.Title, res.Title);
+            }
 
             Console.WriteLine();
             Console.WriteLine("2. Mostrar o nome e idade de todos atores que desempenharam um determinado personagem(por exemplo, quais os atores que já atuaram como '007' ?");
+
+            var query2 = from p in _db.Characters
+                                         .Include(per => per.Actor)
+                             //     join genero in _db.Genres on p.Movie.GenreID equals genero.GenreId
+                         where p.Character == "James Bond"
+                         select new
+                         {
+                             p.Actor.Name,
+                             p.Actor.DateBirth,
+                         };
+
+
+            foreach (var res in query2)
+            {
+
+                Console.WriteLine("\t {0} - {1} anos", res.Name, 2022 - res.DateBirth.Year);
+            }
 
 
             Console.WriteLine();
             Console.WriteLine("3. Informar qual o ator desempenhou mais vezes um determinado personagem(por exemplo: qual o ator que realizou mais filmes como o 'agente 007'");
 
+            var query3 = from p in _db.Characters
+                                         .Include(per => per.Actor)
+                         where p.Character == "James Bond"
+                         group p by p.Actor.Name into g
+                         
+                         select new
+                         {
+                             g.Key,
+                             actorCount = g.Count()
+                         };
+
+            Console.WriteLine("\t {0}", query3.OrderByDescending(i => i.actorCount).First().Key);
+
+                            
             Console.WriteLine();
             Console.WriteLine("4. Mostrar o nome e a data de nascimento do ator mais idoso");
+
+            var query4 = from p in _db.Actors
+
+                         select new
+                         { 
+                             p.Name,
+                             p.DateBirth
+                         };
+
+            Console.WriteLine("\t {0}", query4.OrderByDescending(i => i.DateBirth).Last().Name);
 
             Console.WriteLine();
             Console.WriteLine("5. Mostrar o nome e a data de nascimento do ator mais novo a atuar em um determinado gênero");
 
+            var query5 = from p in _db.Characters
+                         .Include(per => per.Actor)
+                         .Include(per => per.Movie)
+                            .ThenInclude(per => per.Genre)
+                         where p.Movie.Genre.Name == "Action"
+                         select new
+                         {
+                             p.Movie.Genre.Name,
+                             actorName = p.Actor.Name,
+                             p.Actor.DateBirth
+                         };
+
+            Console.WriteLine("\t {0}", query5.OrderByDescending(i => i.DateBirth).First().actorName);
+
             Console.WriteLine();
             Console.WriteLine("6. Mostrar o valor médio das avaliações dos filmes de um determinado diretor");
 
+            var query6 = from p in _db.Movies
+                         where p.Director == "Martin Campbell"
+
+                         select new
+                         {
+                            p.Rating
+                         };
+
+            Console.WriteLine("\t {0} ", query6.Average(a => a.Rating));
+
             Console.WriteLine();
             Console.WriteLine("7. Qual o elenco do filme melhor avaliado ?");
+
+            var query7Aux = from m in _db.Movies
+                            select new
+                            {
+                                m.Rating,
+                                m.Title
+                            };
+
+            String movieName = query7Aux.OrderByDescending(m => m.Rating).First().Title;
+
+            var query7 = from p in _db.Characters
+                         .Include(per => per.Actor)
+                         .Include(per => per.Movie)
+
+                         //"The Empire Strikes Back"
+                         //O rating mais alto não tem elenco (╯°□°）╯︵ ┻━┻
+                         where p.Movie.Title == movieName
+                         select new
+                         {
+                             p.Movie.Title,
+                             p.Actor.Name
+                         };
+
+            foreach (var res in query7)
+            {
+
+                Console.WriteLine("\t {0} ", res.Name);
+            }
 
             Console.WriteLine();
             Console.WriteLine("8. Qual o elenco do filme com o maior faturamento?");
