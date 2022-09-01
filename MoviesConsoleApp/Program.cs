@@ -153,8 +153,51 @@ namespace MoviesConsoleApp
             Console.WriteLine();
             Console.WriteLine("8. Qual o elenco do filme com o maior faturamento?");
 
+            var query8Aux = from m in _db.Movies
+                            select new
+                            {
+                                m.Gross,
+                                m.Title
+                            };
+
+            String movieName2 = query8Aux.OrderByDescending(m => m.Gross).First().Title;
+
+            var query8 = from p in _db.Characters
+                         .Include(per => per.Actor)
+                         .Include(per => per.Movie)
+
+
+                         where p.Movie.Title == movieName2
+                         select new
+                         {
+                             p.Movie.Title,
+                             p.Actor.Name
+                         };
+
+            foreach (var res in query8)
+            {
+
+                Console.WriteLine("\t {0} ", res.Name);
+            }
+
             Console.WriteLine();
             Console.WriteLine("9. Gerar um relatório de aniversariantes, agrupando os atores pelo mês de aniverário.");
+
+            var query9 = from a in _db.Actors
+                         orderby a.DateBirth.Month, a.DateBirth.Day
+
+                         select new
+                         {
+                             Mes = a.DateBirth.Month,
+                             Dia = a.DateBirth.Day,
+                             Ator = a.Name
+                         };
+
+            foreach (var res in query9)
+            {
+
+                Console.WriteLine("\t {0} \t {1} \t {2} ", res.Mes,res.Dia,res.Ator);
+            }
 
             Console.WriteLine("- - -   feito!  - - - ");
             Console.WriteLine();
